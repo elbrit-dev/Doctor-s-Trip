@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Elbrit Life Sciences | Doctors' Sky Journeys 2026</title>
+  <meta name="description" content="A clean, light Vue SPA for Elbrit Life Sciences doctors' tours — Georgia, and Georgia plus IDF Doha." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ["DM Serif Display", "Georgia", "serif"],
+            sans: ["Inter", "system-ui", "sans-serif"],
+          },
+          colors: {
+            ink: "#102236", cloud: "#f8fbff", mist: "#eaf5ff",
+            sky: "#5fb8ff", deepSky: "#1676c9",
+            leaf: "#0f9f82", sun: "#f2b84b", coral: "#ef7f5f",
+          },
+          boxShadow: {
+            soft: "0 24px 90px rgba(22, 118, 201, .13)",
+            card: "0 18px 50px rgba(16, 34, 54, .10)",
+            glow: "0 20px 80px rgba(95, 184, 255, .28)",
+          },
+          keyframes: {
+            cloudDrift: { "0%": { transform: "translate3d(-10vw,0,0)" }, "100%": { transform: "translate3d(110vw,0,0)" } },
+            floaty: { "0%,100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-12px)" } },
+          },
+          animation: { cloudDrift: "cloudDrift 60s linear infinite", floaty: "floaty 6s ease-in-out infinite" },
+        },
+      },
+    };
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+  <style>
+    body { background:#f8fbff; color:#102236; overflow-x:hidden; }
+    [v-cloak]{ display:none; }
+
+    /* sky gradient + clouds */
+    .sky-bg {
+      position:absolute; inset:0; pointer-events:none; overflow:hidden;
+      background:
+        radial-gradient(60% 50% at 50% -10%, #eaf5ff, transparent 70%),
+        linear-gradient(180deg, #f8fbff, #ffffff 60%);
+    }
+    .cloud { position:absolute; border-radius:999px; background:#ffffff; filter:blur(2px); opacity:.85;
+             box-shadow: 40px 10px 0 -6px #fff, 90px 0 0 -10px #fff, -40px 12px 0 -8px #fff; }
+
+    .grid-dots { position:absolute; inset:0; pointer-events:none; opacity:.55;
+      background-image: radial-gradient(rgba(22,118,201,.14) 1px, transparent 1px);
+      background-size: 26px 26px;
+      mask-image: radial-gradient(ellipse 75% 60% at 50% 35%, #000 30%, transparent 75%); }
+
+    .serif-grad { background:linear-gradient(115deg,#1676c9,#0f9f82 60%,#5fb8ff);
+      -webkit-background-clip:text; background-clip:text; color:transparent; }
+    .sun-grad { background:linear-gradient(115deg,#f2b84b,#ef7f5f);
+      -webkit-background-clip:text; background-clip:text; color:transparent; }
+
+    .glass { background:rgba(255,255,255,.7); border:1px solid rgba(22,118,201,.12); backdrop-filter:blur(12px); }
+    .hairline { height:1px; background:linear-gradient(90deg, transparent, rgba(22,118,201,.4), transparent); }
+
+    .btn-sheen { position:relative; overflow:hidden; }
+    .btn-sheen::after { content:''; position:absolute; top:0; left:-120%; width:55%; height:100%;
+      background:linear-gradient(110deg, transparent, rgba(255,255,255,.7), transparent);
+      transform:skewX(-20deg); animation:sheen 3.6s ease-in-out infinite; }
+    @keyframes sheen { 0%,60%{ left:-120%; } 100%{ left:170%; } }
+
+    .reveal-word { display:inline-block; opacity:0; transform:translateY(36px) rotateX(-35deg); transform-origin:bottom; }
+    .fade-up { opacity:0; transform:translateY(26px); }
+
+    .trip-card { transition: transform .5s cubic-bezier(.16,1,.3,1), box-shadow .5s; }
+    .trip-card:hover { transform:translateY(-8px); box-shadow:0 30px 70px -28px rgba(22,118,201,.4); }
+    .trip-card.is-pro:hover { box-shadow:0 30px 70px -28px rgba(242,184,75,.5); }
+    .trip-photo{height:220px;margin:-2rem -2rem 1.75rem;border-radius:1.5rem 1.5rem 1rem 1rem;overflow:hidden;background:#eaf5ff}
+    .trip-photo img{width:100%;height:100%;object-fit:cover;transition:transform .8s cubic-bezier(.16,1,.3,1)}
+    .trip-card:hover .trip-photo img{transform:scale(1.08)}
+    .date-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;margin:1.25rem 0}
+    .date-grid span{border-radius:1rem;background:#eaf5ff;padding:.75rem .6rem;text-align:center;font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:#102236}
+
+    .scroll-cue span { animation: bob 1.8s ease-in-out infinite; }
+    @keyframes bob { 0%,100%{ transform:translateY(0); opacity:.4 } 50%{ transform:translateY(8px); opacity:1 } }
+    ::selection { background: rgba(95,184,255,.35); }
+  </style>
+</head>
+
+<body class="font-sans antialiased">
+<div id="app" v-cloak>
+
+  <!-- NAV -->
+  <header class="fixed top-0 inset-x-0 z-50 transition-all duration-500"
+          :class="scrolled ? 'bg-white/80 backdrop-blur-xl shadow-card' : ''">
+    <nav class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <a href="#top" class="flex items-center gap-3">
+        <span class="flex h-12 w-[13rem] items-center rounded-full bg-white px-4 shadow-sm sm:w-[15rem]">
+          <img src="./elbrit-logo.svg" alt="Elbrit Life Sciences" class="h-8 w-full object-contain object-left" />
+        </span>
+      </a>
+      <div class="hidden md:flex items-center gap-8 text-sm text-ink/70">
+        <a href="#journeys" class="hover:text-deepSky transition">The Journeys</a>
+        <a href="#experience" class="hover:text-deepSky transition">Experience</a>
+        <a href="#itinerary" class="hover:text-deepSky transition">Itinerary</a>
+        <a href="#signup" class="px-5 py-2.5 rounded-full btn-sheen bg-gradient-to-r from-sky to-deepSky text-white font-semibold shadow-glow">Reserve Your Seat</a>
+      </div>
+      <button class="md:hidden text-ink/80" @click="menuOpen=!menuOpen" aria-label="Menu">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path :d="menuOpen ? 'M6 6l12 12M6 18L18 6' : 'M4 7h16M4 12h16M4 17h16'" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </nav>
+    <transition name="slide">
+      <div v-if="menuOpen" class="md:hidden glass mx-4 rounded-2xl p-5 flex flex-col gap-4 text-ink/80 shadow-card">
+        <a href="#journeys" @click="menuOpen=false">The Journeys</a>
+        <a href="#experience" @click="menuOpen=false">Experience</a>
+        <a href="#itinerary" @click="menuOpen=false">Itinerary</a>
+        <a href="#signup" @click="menuOpen=false" class="text-deepSky font-semibold">Reserve Your Seat →</a>
+      </div>
+    </transition>
+  </header>
+
+  <!-- HERO -->
+  <section id="top" class="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <div class="sky-bg"></div>
+    <div class="grid-dots"></div>
+    <!-- drifting clouds -->
+    <div class="cloud w-40 h-12 top-[18%]" style="animation:cloudDrift 55s linear infinite"></div>
+    <div class="cloud w-28 h-9 top-[32%]" style="animation:cloudDrift 80s linear infinite; animation-delay:-20s"></div>
+    <div class="cloud w-52 h-14 top-[60%]" style="animation:cloudDrift 70s linear infinite; animation-delay:-40s"></div>
+
+    <div class="relative z-10 text-center px-6 max-w-5xl">
+      <p class="hero-kicker inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass text-xs uppercase tracking-[.3em] text-deepSky mb-8 shadow-card">
+        <span class="w-1.5 h-1.5 rounded-full bg-leaf animate-pulse"></span>
+        An Invitation for Our Partner Doctors · 2026
+      </p>
+
+      <h1 class="font-display leading-[1.05] text-5xl sm:text-6xl md:text-7xl lg:text-[5.4rem]">
+        <span id="headline" class="block text-ink"></span>
+        <span class="block mt-2 serif-grad">Beyond Medicine.</span>
+      </h1>
+
+      <p class="hero-sub fade-up mt-8 text-lg md:text-xl text-ink/60 max-w-2xl mx-auto">
+        For years you've cared for others. This year, Elbrit invites you to be cared for —
+        with two curated journeys crafted exclusively for the doctors who walk beside us.
+      </p>
+
+      <div class="hero-cta fade-up mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="#journeys" class="px-8 py-4 rounded-full bg-gradient-to-r from-sky to-deepSky text-white font-semibold shadow-glow hover:scale-[1.03] transition">Discover the Journeys</a>
+        <a href="#signup" class="px-8 py-4 rounded-full glass btn-sheen text-ink/80 font-medium hover:text-ink transition shadow-card">Reserve Your Seat</a>
+      </div>
+
+      <div class="hero-stats fade-up mt-16 grid grid-cols-3 gap-6 max-w-xl mx-auto">
+        <div v-for="s in heroStats" :key="s.label" class="text-center">
+          <p class="font-display text-3xl md:text-4xl serif-grad">{{ s.value }}</p>
+          <p class="text-[11px] uppercase tracking-widest text-ink/40 mt-1">{{ s.label }}</p>
+        </div>
+      </div>
+    </div>
+
+    <a href="#journeys" class="scroll-cue absolute bottom-8 left-1/2 -translate-x-1/2 text-ink/40 text-xs flex flex-col items-center gap-2">
+      Scroll to explore
+      <span><svg width="18" height="26" viewBox="0 0 18 26" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="1" y="1" width="16" height="24" rx="8"/><circle cx="9" cy="8" r="2" fill="currentColor"/></svg></span>
+    </a>
+  </section>
+
+  <!-- JOURNEYS -->
+  <section id="journeys" class="relative py-28 px-6">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16 reveal-block">
+        <p class="text-xs uppercase tracking-[.3em] text-leaf mb-4">Choose Your Journey</p>
+        <h2 class="font-display text-4xl md:text-6xl">Two Doors. <span class="serif-grad">One Unforgettable Year.</span></h2>
+        <p class="text-ink/55 mt-5 max-w-2xl mx-auto">Whether you seek pure escape or escape with purpose, your seat awaits.</p>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-8">
+        <article v-for="t in trips" :key="t.id"
+                 class="trip-card reveal-block bg-white rounded-3xl p-8 md:p-10 relative overflow-hidden border border-mist shadow-card"
+                 :class="{ 'is-pro ring-1 ring-sun/40': t.featured }">
+          <div class="trip-photo">
+            <img :src="t.image" :alt="t.title" loading="lazy" />
+          </div>
+          <div v-if="t.featured" class="absolute top-6 right-6 text-[10px] uppercase tracking-widest px-3 py-1 rounded-full bg-gradient-to-r from-sun to-coral text-white font-bold">Flagship</div>
+          <div class="text-5xl mb-6">{{ t.emoji }}</div>
+          <p class="text-xs uppercase tracking-[.25em]" :class="t.featured ? 'text-coral' : 'text-leaf'">{{ t.tag }}</p>
+          <h3 class="font-display text-3xl md:text-4xl mt-2 mb-1">{{ t.title }}</h3>
+          <p class="text-ink/50 text-sm mb-6">{{ t.subtitle }}</p>
+          <div class="date-grid">
+            <span>{{ t.date }}</span>
+            <span>{{ t.nights }}</span>
+            <span>{{ t.days }}</span>
+          </div>
+          <div class="hairline my-6"></div>
+          <ul class="space-y-3 mb-8">
+            <li v-for="f in t.features" :key="f" class="flex items-start gap-3 text-ink/75 text-sm">
+              <svg class="mt-0.5 shrink-0" :class="t.featured ? 'text-sun' : 'text-leaf'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>{{ f }}</span>
+            </li>
+          </ul>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-[11px] uppercase tracking-widest text-ink/40">Duration</p>
+              <p class="font-display text-xl">{{ t.duration }}</p>
+            </div>
+            <a href="#signup" @click="selectTrip(t.id)" class="px-6 py-3 rounded-full font-semibold text-white transition hover:scale-105 shadow-glow"
+               :class="t.featured ? 'bg-gradient-to-r from-sun to-coral' : 'bg-gradient-to-r from-sky to-deepSky'">Reserve →</a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPERIENCE -->
+  <section id="experience" class="relative py-28 px-6 bg-mist/40">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16 reveal-block">
+        <p class="text-xs uppercase tracking-[.3em] text-leaf mb-4">Crafted For You</p>
+        <h2 class="font-display text-4xl md:text-6xl">Every Detail, <span class="sun-grad">Considered.</span></h2>
+      </div>
+      <div class="grid md:grid-cols-3 gap-5 auto-rows-[200px]">
+        <div v-for="b in bento" :key="b.title" class="reveal-block bg-white rounded-3xl p-7 relative overflow-hidden group border border-mist shadow-card hover:shadow-soft transition" :class="b.span">
+          <div class="text-3xl mb-3">{{ b.icon }}</div>
+          <h3 class="font-display text-2xl mb-2">{{ b.title }}</h3>
+          <p class="text-ink/55 text-sm leading-relaxed">{{ b.desc }}</p>
+          <div class="absolute -bottom-10 -right-10 w-40 h-40 rounded-full opacity-0 group-hover:opacity-100 transition duration-700" style="background:radial-gradient(circle, rgba(95,184,255,.22), transparent 70%)"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ITINERARY -->
+  <section id="itinerary" class="relative py-28 px-6">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-16 reveal-block">
+        <p class="text-xs uppercase tracking-[.3em] text-leaf mb-4">A Taste of Georgia</p>
+        <h2 class="font-display text-4xl md:text-6xl">From <span class="serif-grad">Caucasus Peaks</span> to Doha Lights</h2>
+      </div>
+      <div class="relative pl-8 md:pl-0">
+        <div class="absolute left-3 md:left-1/2 top-2 bottom-2 w-px bg-gradient-to-b from-sky via-leaf/50 to-transparent"></div>
+        <div v-for="(d,i) in itinerary" :key="i" class="reveal-block relative mb-12 md:w-1/2" :class="i%2===0 ? 'md:pr-12 md:text-right' : 'md:ml-auto md:pl-12'">
+          <div class="absolute top-1.5 w-4 h-4 rounded-full bg-gradient-to-br from-sky to-deepSky ring-4 ring-cloud" :class="i%2===0 ? 'left-[-29px] md:left-auto md:right-[-8px]' : 'left-[-29px] md:left-[-8px]'"></div>
+          <p class="text-xs uppercase tracking-widest text-leaf">{{ d.day }}</p>
+          <h3 class="font-display text-2xl mt-1">{{ d.title }}</h3>
+          <p class="text-ink/55 text-sm mt-2">{{ d.desc }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIAL -->
+  <section class="relative py-20 px-6">
+    <div class="max-w-5xl mx-auto reveal-block glass rounded-3xl p-10 md:p-14 text-center shadow-card">
+      <p class="font-display text-2xl md:text-3xl leading-relaxed text-ink/85">
+        “Elbrit doesn't just sponsor a trip — they design a <span class="serif-grad">memory</span>.
+        Every doctor returns not as a delegate, but as a friend.”
+      </p>
+      <p class="mt-6 text-sm text-ink/45 uppercase tracking-widest">— A Partner Physician, 2025 Cohort</p>
+    </div>
+  </section>
+
+  <!-- SIGN UP -->
+  <section id="signup" class="relative py-28 px-6 bg-mist/40">
+    <div class="max-w-3xl mx-auto relative">
+      <div class="text-center mb-10 reveal-block">
+        <p class="text-xs uppercase tracking-[.3em] text-coral mb-4">Your Seat Awaits</p>
+        <h2 class="font-display text-4xl md:text-6xl">Reserve Your <span class="serif-grad">Journey</span></h2>
+        <p class="text-ink/55 mt-5 max-w-xl mx-auto">Seats are limited and offered by invitation. Complete the short form below and our team will confirm your place within 48 hours.</p>
+        <p v-if="chosenTripLabel" class="mt-4 inline-block px-4 py-2 rounded-full glass text-sm text-deepSky shadow-card">Selected: <strong class="text-ink">{{ chosenTripLabel }}</strong></p>
+      </div>
+
+      <div class="reveal-block bg-white rounded-3xl p-3 md:p-4 shadow-soft border border-mist">
+        <!-- SWAP IN YOUR REAL TALLY FORM: replace YOUR_FORM_ID below -->
+        <iframe
+          data-tally-src="https://tally.so/embed/dWvkQV?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"
+          loading="lazy" width="100%" height="600" frameborder="0" marginheight="0" marginwidth="0"
+          title="Elbrit Doctor Journey — Sign Up" class="rounded-2xl w-full"></iframe>
+        <div v-if="tallyPlaceholder" class="text-center text-ink/45 text-sm py-10 px-6">
+          <p class="font-display text-xl text-ink/70 mb-2">📋 Tally form goes here</p>
+          <p>Replace <code class="text-deepSky">YOUR_FORM_ID</code> in the iframe above with your Tally form ID, then delete this placeholder block.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-mist py-12 px-6">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-ink/45 text-sm">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg grid place-items-center font-display text-white bg-gradient-to-br from-sky to-deepSky">E</div>
+        <span>Elbrit Life Sciences · Caring beyond medicine</span>
+      </div>
+      <p>© 2026 Elbrit Life Sciences. By invitation only.</p>
+    </div>
+  </footer>
+</div>
+
+<script async src="https://tally.so/widgets/embed.js"></script>
+<script>
+  const { createApp } = Vue;
+  createApp({
+    data() {
+      return {
+        scrolled:false, menuOpen:false, chosenTrip:null, tallyPlaceholder:true,
+        heroStats:[{value:'02',label:'Curated Journeys'},{value:'5★',label:'Hospitality'},{value:'∞',label:'Memories'}],
+        trips:[
+          { id:'georgia', emoji:'G', tag:'The Escape', title:'Georgia', subtitle:'Where the Caucasus meets the soul.', date:'OCTOBER 2026', nights:'5 NIGHTS', days:'6 DAYS', duration:'Tour Package', featured:false, image:'./assets/georgia-mountain.jpg',
+            features:['Tbilisi old town & wine country','Kazbegi mountains & monasteries','Premium stays, all-inclusive hospitality','Curated dining & cultural evenings'] },
+          { id:'georgia-doha', emoji:'IDF', tag:'The Escape + The Edge', title:'Georgia + IDF Doha', subtitle:'Adventure today, knowledge tomorrow.', date:'APRIL 2027', nights:'6 NIGHTS', days:'7 DAYS', duration:'Tour + Conference', featured:true, image:'./assets/doha-skyline.jpg',
+            features:['Everything in the Georgia journey','IDF World Diabetes Congress — Doha','CME & global clinical insight','Network with peers across the world'] },
+        ],
+        bento:[
+          { icon:'✈️', title:'Seamless Travel', desc:'Flights, transfers, visas — handled end to end. You simply arrive.', span:'md:col-span-2' },
+          { icon:'🏨', title:'Signature Stays', desc:'Hand-picked premium hotels with views worth waking up for.', span:'' },
+          { icon:'🍷', title:'Curated Dining', desc:'From Georgian supras to fine dining in Doha.', span:'' },
+          { icon:'🩺', title:'Knowledge, Elevated', desc:'IDF Doha brings world-class diabetes science to your journey.', span:'md:col-span-2' },
+          { icon:'🤝', title:'A Community', desc:'Travel beside peers who become lasting friends.', span:'md:col-span-2' },
+          { icon:'🎁', title:'Little Surprises', desc:'Thoughtful touches at every turn — the Elbrit way.', span:'' },
+        ],
+        itinerary:[
+          { day:'Day 1–2', title:'Tbilisi Arrival', desc:'Welcome to Georgia. Settle into luxury and explore the historic old town by night.' },
+          { day:'Day 3–4', title:'Caucasus & Kazbegi', desc:'Mountain vistas, ancient monasteries, and air that feels like a reset.' },
+          { day:'Day 5', title:'Wine Country', desc:'Kakheti vineyards — the birthplace of wine, 8,000 years deep.' },
+          { day:'Day 6+', title:'Onward to Doha', desc:'For the flagship cohort: the IDF World Diabetes Congress and the lights of Doha.' },
+        ],
+      };
+    },
+    computed: {
+      chosenTripLabel(){ const t=this.trips.find(t=>t.id===this.chosenTrip); return t?t.title:null; },
+    },
+    methods: {
+      onScroll(){ this.scrolled = window.scrollY > 30; },
+      selectTrip(id){ this.chosenTrip = id; },
+    },
+    mounted() {
+      window.addEventListener('scroll', this.onScroll, { passive:true });
+      this.$nextTick(() => initAnimations());
+    },
+    beforeUnmount(){ window.removeEventListener('scroll', this.onScroll); },
+  }).mount('#app');
+
+  function initAnimations() {
+    gsap.registerPlugin(ScrollTrigger);
+    const headline = document.getElementById('headline');
+    if (headline) {
+      headline.textContent = '';
+      'You Care for the World.'.split(' ').forEach(w => {
+        const s = document.createElement('span');
+        s.className = 'reveal-word'; s.style.marginRight = '0.25em'; s.textContent = w;
+        headline.appendChild(s);
+      });
+    }
+    const tl = gsap.timeline({ defaults:{ ease:'power3.out' } });
+    tl.from('.hero-kicker', { y:20, autoAlpha:0, duration:0.7 }, 0.1)
+      .to('.reveal-word', { y:0, rotateX:0, autoAlpha:1, duration:0.9, stagger:0.08 }, 0.2)
+      .to('.hero-sub', { y:0, autoAlpha:1, duration:0.8 }, 0.7)
+      .to('.hero-cta', { y:0, autoAlpha:1, duration:0.8 }, 0.9)
+      .to('.hero-stats', { y:0, autoAlpha:1, duration:0.8 }, 1.05);
+
+    gsap.utils.toArray('.reveal-block').forEach(el => {
+      gsap.fromTo(el, { y:40, autoAlpha:0 },
+        { y:0, autoAlpha:1, duration:0.9, ease:'power3.out',
+          scrollTrigger:{ trigger:el, start:'top 85%', toggleActions:'play none none reverse' } });
+    });
+  }
+</script>
+</body>
+</html>
