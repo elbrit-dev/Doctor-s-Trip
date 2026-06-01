@@ -49,6 +49,11 @@
         <h1 class="gsap-reveal mt-7 font-display text-[2.5rem] leading-[.98] text-ink [overflow-wrap:break-word] sm:text-6xl sm:leading-[.92] lg:text-[5.6rem]">Two extraordinary <span class="sky-text block italic">journeys await you.</span></h1>
         <p class="gsap-reveal mx-auto mt-6 max-w-2xl text-base leading-7 text-ink/[.66] sm:mt-7 sm:text-xl sm:leading-8">Curated escapes designed exclusively for Elbrit's doctors. Choose the experience that calls to you — then reserve your place.</p>
         <div class="gsap-reveal mt-8 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-[.22em] text-deepSky/70"><span class="animate-float">↓</span> Choose your journey</div>
+        <div id="authArea" class="gsap-reveal mt-8 flex flex-col items-center gap-3">
+          <button id="googleSignIn" type="button" class="inline-flex items-center gap-3 rounded-full bg-deepSky px-8 py-4 font-black text-white shadow-glow transition hover:-translate-y-1 hover:bg-ink"><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22 22-9.8 22-22c0-1.3-.1-2.3-.4-3.5z"></path><path fill="#FF3D00" d="M3.3 12.7l6.6 4.8C11.5 13.7 17.3 9.9 24 9.9c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 4.1 29.6 2 24 2 16.3 2 9.7 6.3 3.3 12.7z"></path><path fill="#4CAF50" d="M24 46c5.5 0 10.4-2.1 14.1-5.5l-6.5-5.5c-2 1.4-4.6 2.3-7.6 2.3-5.2 0-9.6-3.3-11.2-7.9l-6.6 5.1C9.5 41.6 16.2 46 24 46z"></path><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.5 5.5C41.8 36 44 30.6 44 24c0-1.3-.1-2.3-.4-3.5z"></path></svg><span>Sign in with Google</span></button>
+          <p id="userStatus" class="hidden text-sm font-bold text-deepSky"></p>
+          <button id="signOutBtn" type="button" class="hidden text-xs font-bold uppercase tracking-[.12em] text-ink/45 underline underline-offset-4">Sign out</button>
+        </div>
       </div>
     </section>
 
@@ -105,6 +110,18 @@
 
       </div>
 
+      <!-- SIGN-UP FORM (revealed after Google sign-in) -->
+      <div id="formSection" class="mx-auto mt-12 hidden max-w-4xl">
+        <div class="rounded-[2.4rem] bg-white p-4 shadow-card sm:p-6">
+          <div class="rounded-[1.8rem] bg-gradient-to-br from-sky/20 via-white to-leaf/15 px-4 py-8 sm:px-8">
+            <p class="text-center text-sm font-black uppercase tracking-[.28em] text-deepSky">Reserve your place</p>
+            <h3 class="mt-3 text-center font-display text-4xl leading-none text-ink sm:text-5xl">Complete your sign-up</h3>
+            <p class="mx-auto mt-4 max-w-xl text-center text-sm leading-6 text-ink/[.58]">Fill the form below and the Elbrit team will follow up with availability and next steps.</p>
+            <iframe id="tallyFrame" class="mt-7 w-full rounded-2xl bg-transparent" width="100%" height="660" frameborder="0" marginheight="0" marginwidth="0" title="Elbrit doctors trip sign-up"></iframe>
+          </div>
+        </div>
+      </div>
+
       <p class="gsap-reveal mx-auto mt-10 max-w-md text-center text-sm text-ink/45">Both journeys are invitation-only. Select a journey to view the full itinerary and reserve your interest.</p>
     </section>
 
@@ -120,6 +137,63 @@
   <script>
     (()=>{const canvas=document.getElementById("fluidCursor");if(!canvas||matchMedia("(pointer: coarse)").matches||matchMedia("(prefers-reduced-motion: reduce)").matches)return;const ctx=canvas.getContext("2d");const dots=Array.from({length:18},(_,i)=>({x:innerWidth/2,y:innerHeight/2,r:42-i*1.5,a:.16-i*.006}));let target={x:innerWidth/2,y:innerHeight/2},active=false;function resize(){canvas.width=innerWidth*devicePixelRatio;canvas.height=innerHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}resize();addEventListener("resize",resize);addEventListener("pointermove",e=>{target.x=e.clientX;target.y=e.clientY;active=true},{passive:true});addEventListener("pointerleave",()=>active=false);function draw(){ctx.clearRect(0,0,innerWidth,innerHeight);let x=target.x,y=target.y;dots.forEach((dot,i)=>{dot.x+=(x-dot.x)*(i===0?.24:.18);dot.y+=(y-dot.y)*(i===0?.24:.18);x=dot.x;y=dot.y;const g=ctx.createRadialGradient(dot.x,dot.y,0,dot.x,dot.y,dot.r);g.addColorStop(0,`rgba(88,183,255,${active?dot.a:0})`);g.addColorStop(.45,`rgba(15,159,130,${active?dot.a*.55:0})`);g.addColorStop(1,"rgba(88,183,255,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(dot.x,dot.y,dot.r,0,Math.PI*2);ctx.fill()});requestAnimationFrame(draw)}draw()})();
     if(window.gsap && window.ScrollTrigger){ gsap.registerPlugin(ScrollTrigger); gsap.to(document.documentElement,{"--scroll":1,ease:"none",scrollTrigger:{start:0,end:"max",scrub:.2}}); gsap.set(".gsap-reveal",{opacity:0,y:38,filter:"blur(10px)"}); gsap.set(".gsap-frame",{opacity:0,y:70,scale:.96}); gsap.utils.toArray(".gsap-reveal").forEach(el=>gsap.to(el,{opacity:1,y:0,filter:"blur(0px)",duration:.9,ease:"power3.out",scrollTrigger:{trigger:el,start:"top 90%"}})); gsap.utils.toArray(".gsap-frame").forEach((el,i)=>gsap.to(el,{opacity:1,y:0,scale:1,duration:.95,delay:i*.12,ease:"power3.out",scrollTrigger:{trigger:el,start:"top 88%"}})); gsap.utils.toArray(".magnetic").forEach(card=>{card.onpointermove=e=>{const r=card.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;card.style.setProperty("--mx",x+"px");card.style.setProperty("--my",y+"px");gsap.to(card,{rotateX:((y/r.height)-.5)*-6,rotateY:((x/r.width)-.5)*6,y:-6,duration:.35,ease:"power2.out"})};card.onpointerleave=()=>gsap.to(card,{rotateX:0,rotateY:0,y:0,duration:.55,ease:"elastic.out(1,.5)"})}); } else { document.querySelectorAll(".gsap-reveal,.gsap-frame").forEach(el=>{el.style.opacity=1;el.style.transform="none";el.style.filter="none"}); }
+  </script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyApeZ867NoU7U1AO98SP64l2bXRLZbrZkE",
+      authDomain: "doctors-trip.firebaseapp.com",
+      projectId: "doctors-trip",
+      storageBucket: "doctors-trip.firebasestorage.app",
+      messagingSenderId: "582480799566",
+      appId: "1:582480799566:web:ce57f03612e2214175e01f",
+      measurementId: "G-E174SVYQQ6"
+    };
+
+    const TALLY_FORM_ID = "dWvkQV";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    const signInBtn = document.getElementById("googleSignIn");
+    const signOutBtn = document.getElementById("signOutBtn");
+    const userStatus = document.getElementById("userStatus");
+    const formSection = document.getElementById("formSection");
+    const frame = document.getElementById("tallyFrame");
+
+    signInBtn?.addEventListener("click", async () => {
+      try { await signInWithPopup(auth, provider); }
+      catch (err) { console.error("Sign-in error:", err.code, err.message); alert("Sign-in failed: " + err.message); }
+    });
+
+    signOutBtn?.addEventListener("click", () => signOut(auth));
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        signInBtn.classList.add("hidden");
+        signOutBtn.classList.remove("hidden");
+        userStatus.classList.remove("hidden");
+        userStatus.textContent = "Signed in as " + (user.displayName || user.email);
+        if (!frame.src) {
+          const params = new URLSearchParams({
+            alignLeft: "1", transparentBackground: "1", dynamicHeight: "1",
+            uid: user.uid, name: user.displayName || "", email: user.email || ""
+          });
+          frame.src = "https://tally.so/embed/" + TALLY_FORM_ID + "?" + params.toString();
+        }
+        formSection.classList.remove("hidden");
+        formSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        signInBtn.classList.remove("hidden");
+        signOutBtn.classList.add("hidden");
+        userStatus.classList.add("hidden");
+        userStatus.textContent = "";
+        formSection.classList.add("hidden");
+      }
+    });
   </script>
 </body>
 </html>
