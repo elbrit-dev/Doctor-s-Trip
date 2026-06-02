@@ -50,9 +50,21 @@
         <p class="gsap-reveal mx-auto mt-6 max-w-2xl text-base leading-7 text-ink/[.66] sm:mt-7 sm:text-xl sm:leading-8">Curated escapes designed exclusively for Elbrit's doctors. Choose the experience that calls to you — then reserve your place.</p>
         <div class="gsap-reveal mt-8 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-[.22em] text-deepSky/70"><span class="animate-float">↓</span> Choose your journey</div>
         <div id="authArea" class="gsap-reveal mt-8 flex flex-col items-center gap-3">
-          <button id="googleSignIn" type="button" class="inline-flex items-center gap-3 rounded-full bg-deepSky px-8 py-4 font-black text-white shadow-glow transition hover:-translate-y-1 hover:bg-ink"><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22 22-9.8 22-22c0-1.3-.1-2.3-.4-3.5z"></path><path fill="#FF3D00" d="M3.3 12.7l6.6 4.8C11.5 13.7 17.3 9.9 24 9.9c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 4.1 29.6 2 24 2 16.3 2 9.7 6.3 3.3 12.7z"></path><path fill="#4CAF50" d="M24 46c5.5 0 10.4-2.1 14.1-5.5l-6.5-5.5c-2 1.4-4.6 2.3-7.6 2.3-5.2 0-9.6-3.3-11.2-7.9l-6.6 5.1C9.5 41.6 16.2 46 24 46z"></path><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.5 5.5C41.8 36 44 30.6 44 24c0-1.3-.1-2.3-.4-3.5z"></path></svg><span>Sign in with Google</span></button>
+          <!-- Step 1: phone number -->
+          <div id="phoneStep" class="flex w-full max-w-sm flex-col items-center gap-3">
+            <input id="phoneInput" type="tel" inputmode="tel" autocomplete="tel" placeholder="+91 98765 43210" class="w-full rounded-full border border-sky/20 bg-white/85 px-6 py-4 text-center font-bold text-ink shadow-soft outline-none focus:border-deepSky" />
+            <button id="sendOtpBtn" type="button" class="w-full rounded-full bg-deepSky px-8 py-4 font-black text-white shadow-glow transition hover:-translate-y-1 hover:bg-ink">Send OTP</button>
+          </div>
+          <!-- Step 2: OTP -->
+          <div id="otpStep" class="hidden flex w-full max-w-sm flex-col items-center gap-3">
+            <p class="text-xs font-bold text-ink/55">Enter the 6-digit code sent to <span id="otpTarget" class="text-deepSky"></span></p>
+            <input id="otpInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" class="w-full rounded-full border border-sky/20 bg-white/85 px-6 py-4 text-center text-lg font-black tracking-[.4em] text-ink shadow-soft outline-none focus:border-deepSky" />
+            <button id="verifyOtpBtn" type="button" class="w-full rounded-full bg-deepSky px-8 py-4 font-black text-white shadow-glow transition hover:-translate-y-1 hover:bg-ink">Verify &amp; continue</button>
+            <button id="changeNumberBtn" type="button" class="text-xs font-bold uppercase tracking-[.12em] text-ink/45 underline underline-offset-4">Change number</button>
+          </div>
           <p id="userStatus" class="hidden text-sm font-bold text-deepSky"></p>
           <button id="signOutBtn" type="button" class="hidden text-xs font-bold uppercase tracking-[.12em] text-ink/45 underline underline-offset-4">Sign out</button>
+          <div id="recaptcha-container"></div>
         </div>
       </div>
     </section>
@@ -140,7 +152,7 @@
   </script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
+    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyApeZ867NoU7U1AO98SP64l2bXRLZbrZkE",
@@ -156,38 +168,99 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
 
-    const signInBtn = document.getElementById("googleSignIn");
+    // Elements
+    const phoneStep = document.getElementById("phoneStep");
+    const otpStep = document.getElementById("otpStep");
+    const phoneInput = document.getElementById("phoneInput");
+    const otpInput = document.getElementById("otpInput");
+    const sendOtpBtn = document.getElementById("sendOtpBtn");
+    const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+    const changeNumberBtn = document.getElementById("changeNumberBtn");
+    const otpTarget = document.getElementById("otpTarget");
     const signOutBtn = document.getElementById("signOutBtn");
     const userStatus = document.getElementById("userStatus");
     const formSection = document.getElementById("formSection");
     const frame = document.getElementById("tallyFrame");
 
-    signInBtn?.addEventListener("click", async () => {
-      try { await signInWithPopup(auth, provider); }
-      catch (err) { console.error("Sign-in error:", err.code, err.message); alert("Sign-in failed: " + err.message); }
+    let confirmationResult = null;
+
+    // Invisible reCAPTCHA (created once)
+    const recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
+
+    // Normalise to E.164 — default to India (+91) if no country code typed
+    function toE164(raw) {
+      let p = (raw || "").trim().replace(/[\s\-()]/g, "");
+      if (!p) return "";
+      if (p.startsWith("+")) return p;
+      if (p.length === 10) return "+91" + p;     // bare 10-digit Indian number
+      return "+" + p;
+    }
+
+    // Step 1 — send the OTP
+    sendOtpBtn?.addEventListener("click", async () => {
+      const phone = toE164(phoneInput.value);
+      if (!/^\+\d{8,15}$/.test(phone)) { alert("Please enter a valid phone number with country code, e.g. +91 9876543210"); return; }
+      sendOtpBtn.disabled = true; sendOtpBtn.textContent = "Sending…";
+      try {
+        confirmationResult = await signInWithPhoneNumber(auth, phone, recaptchaVerifier);
+        otpTarget.textContent = phone;
+        phoneStep.classList.add("hidden");
+        otpStep.classList.remove("hidden");
+        otpInput.focus();
+      } catch (err) {
+        console.error("OTP send error:", err.code, err.message);
+        alert("Couldn't send OTP: " + err.message);
+      } finally {
+        sendOtpBtn.disabled = false; sendOtpBtn.textContent = "Send OTP";
+      }
+    });
+
+    // Step 2 — verify the OTP
+    verifyOtpBtn?.addEventListener("click", async () => {
+      const code = (otpInput.value || "").trim();
+      if (!/^\d{6}$/.test(code)) { alert("Enter the 6-digit code."); return; }
+      if (!confirmationResult) { alert("Please request an OTP first."); return; }
+      verifyOtpBtn.disabled = true; verifyOtpBtn.textContent = "Verifying…";
+      try {
+        await confirmationResult.confirm(code);   // signs the user in → onAuthStateChanged fires
+      } catch (err) {
+        console.error("OTP verify error:", err.code, err.message);
+        alert("Invalid or expired code. Please try again.");
+      } finally {
+        verifyOtpBtn.disabled = false; verifyOtpBtn.textContent = "Verify & continue";
+      }
+    });
+
+    // Go back to the phone step
+    changeNumberBtn?.addEventListener("click", () => {
+      otpInput.value = "";
+      otpStep.classList.add("hidden");
+      phoneStep.classList.remove("hidden");
+      phoneInput.focus();
     });
 
     signOutBtn?.addEventListener("click", () => signOut(auth));
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        signInBtn.classList.add("hidden");
+        phoneStep.classList.add("hidden");
+        otpStep.classList.add("hidden");
         signOutBtn.classList.remove("hidden");
         userStatus.classList.remove("hidden");
-        userStatus.textContent = "Signed in as " + (user.displayName || user.email);
+        userStatus.textContent = "Signed in as " + (user.phoneNumber || "verified user");
         if (!frame.src) {
           const params = new URLSearchParams({
             alignLeft: "1", transparentBackground: "1", dynamicHeight: "1",
-            uid: user.uid, name: user.displayName || "", email: user.email || ""
+            uid: user.uid, phone: user.phoneNumber || ""
           });
           frame.src = "https://tally.so/embed/" + TALLY_FORM_ID + "?" + params.toString();
         }
         formSection.classList.remove("hidden");
         formSection.scrollIntoView({ behavior: "smooth", block: "start" });
       } else {
-        signInBtn.classList.remove("hidden");
+        phoneStep.classList.remove("hidden");
+        otpStep.classList.add("hidden");
         signOutBtn.classList.add("hidden");
         userStatus.classList.add("hidden");
         userStatus.textContent = "";
