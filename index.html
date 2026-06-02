@@ -128,8 +128,14 @@
           <div class="rounded-[1.8rem] bg-gradient-to-br from-sky/20 via-white to-leaf/15 px-4 py-8 sm:px-8">
             <p class="text-center text-sm font-black uppercase tracking-[.28em] text-deepSky">Reserve your place</p>
             <h3 class="mt-3 text-center font-display text-4xl leading-none text-ink sm:text-5xl">Complete your sign-up</h3>
-            <p class="mx-auto mt-4 max-w-xl text-center text-sm leading-6 text-ink/[.58]">Fill the form below and the Elbrit team will follow up with availability and next steps.</p>
-            <iframe id="tallyFrame" class="mt-7 w-full rounded-2xl bg-transparent" width="100%" height="660" frameborder="0" marginheight="0" marginwidth="0" title="Elbrit doctors trip sign-up"></iframe>
+            <p id="formIntro" class="mx-auto mt-4 max-w-xl text-center text-sm leading-6 text-ink/[.58]">Fill the form below and the Elbrit team will follow up with availability and next steps.</p>
+            <div id="checkingMsg" class="hidden py-12 text-center text-sm font-bold text-deepSky">Checking your registration…</div>
+            <div id="alreadySubmitted" class="hidden py-12 text-center">
+              <div class="mx-auto grid h-16 w-16 place-items-center rounded-full bg-leaf/15 text-3xl text-leaf">✓</div>
+              <h4 class="mt-5 font-display text-3xl text-ink sm:text-4xl">You've already registered</h4>
+              <p class="mx-auto mt-3 max-w-md text-sm leading-6 text-ink/[.6]">Our records show this number has already submitted the form. Only one submission per doctor is permitted — the Elbrit team will be in touch.</p>
+            </div>
+            <iframe id="tallyFrame" class="mt-7 hidden w-full rounded-2xl bg-transparent" width="100%" height="660" frameborder="0" marginheight="0" marginwidth="0" title="Elbrit doctors trip sign-up"></iframe>
           </div>
         </div>
       </div>
@@ -182,6 +188,9 @@
     const userStatus = document.getElementById("userStatus");
     const formSection = document.getElementById("formSection");
     const frame = document.getElementById("tallyFrame");
+    const formIntro = document.getElementById("formIntro");
+    const checkingMsg = document.getElementById("checkingMsg");
+    const alreadySubmitted = document.getElementById("alreadySubmitted");
 
     let confirmationResult = null;
 
@@ -242,6 +251,42 @@
 
     signOutBtn?.addEventListener("click", () => signOut(auth));
 
+    // Ask our Netlify function whether this phone already submitted, then render.
+    async function renderForUser(user) {
+      formSection.classList.remove("hidden");
+      formSection.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      // show "checking" state, hide the rest
+      formIntro.classList.add("hidden");
+      alreadySubmitted.classList.add("hidden");
+      frame.classList.add("hidden");
+      checkingMsg.classList.remove("hidden");
+
+      let submitted = false;
+      try {
+        const r = await fetch("/.netlify/functions/check-submission?phone=" + encodeURIComponent(user.phoneNumber || ""));
+        const j = await r.json();
+        submitted = !!j.submitted;
+      } catch (e) {
+        console.error("check-submission failed:", e);
+        submitted = false; // on error, fall back to showing the form (Tally still blocks dupes at submit)
+      }
+
+      checkingMsg.classList.add("hidden");
+
+      if (submitted) {
+        alreadySubmitted.classList.remove("hidden");
+      } else {
+        formIntro.classList.remove("hidden");
+        const params = new URLSearchParams({
+          alignLeft: "1", transparentBackground: "1", dynamicHeight: "1",
+          uid: user.uid, phone: user.phoneNumber || ""
+        });
+        frame.src = "https://tally.so/embed/" + TALLY_FORM_ID + "?" + params.toString();
+        frame.classList.remove("hidden");
+      }
+    }
+
     onAuthStateChanged(auth, (user) => {
       if (user) {
         phoneStep.classList.add("hidden");
@@ -249,15 +294,7 @@
         signOutBtn.classList.remove("hidden");
         userStatus.classList.remove("hidden");
         userStatus.textContent = "Signed in as " + (user.phoneNumber || "verified user");
-        if (!frame.src) {
-          const params = new URLSearchParams({
-            alignLeft: "1", transparentBackground: "1", dynamicHeight: "1",
-            uid: user.uid, phone: user.phoneNumber || ""
-          });
-          frame.src = "https://tally.so/embed/" + TALLY_FORM_ID + "?" + params.toString();
-        }
-        formSection.classList.remove("hidden");
-        formSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        renderForUser(user);
       } else {
         phoneStep.classList.remove("hidden");
         otpStep.classList.add("hidden");
@@ -265,6 +302,9 @@
         userStatus.classList.add("hidden");
         userStatus.textContent = "";
         formSection.classList.add("hidden");
+        checkingMsg.classList.add("hidden");
+        alreadySubmitted.classList.add("hidden");
+        frame.classList.add("hidden");
       }
     });
   </script>
