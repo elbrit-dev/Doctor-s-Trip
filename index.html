@@ -1,4 +1,4 @@
-﻿<!doctype html>
+﻿to <!doctype html>
 <html lang="en" class="scroll-smooth">
 <head>
   <meta charset="utf-8" />
@@ -138,6 +138,7 @@
               <p class="mx-auto mt-3 max-w-md text-sm leading-6 text-ink/[.6]">Our records show this number has already submitted the form. Only one submission per doctor is permitted — the Elbrit team will be in touch.</p>
             </div>
             <iframe id="tallyFrame" class="mt-7 hidden w-full rounded-2xl bg-transparent" width="100%" height="660" frameborder="0" marginheight="0" marginwidth="0" title="Elbrit doctors trip sign-up"></iframe>
+            <div id="formUserBar" class="mt-6 flex items-center justify-center gap-3"><span id="userStatus2" class="text-sm font-bold text-deepSky"></span><button id="signOutBtn2" type="button" class="text-xs font-bold uppercase tracking-[.12em] text-ink/45 underline underline-offset-4">Sign out</button></div>
           </div>
         </div>
       </div>
@@ -194,6 +195,8 @@
     const formIntro = document.getElementById("formIntro");
     const checkingMsg = document.getElementById("checkingMsg");
     const alreadySubmitted = document.getElementById("alreadySubmitted");
+    const userStatus2 = document.getElementById("userStatus2");
+    const signOutBtn2 = document.getElementById("signOutBtn2");
 
     let confirmationResult = null;
 
@@ -260,11 +263,13 @@
     });
 
     signOutBtn?.addEventListener("click", () => signOut(auth));
+    signOutBtn2?.addEventListener("click", () => signOut(auth));
 
     // Ask our Netlify function whether this phone already submitted, then render.
     async function renderForUser(user) {
       formSection.classList.remove("hidden");
       formSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      userStatus2.textContent = "Signed in as " + (user.phoneNumber || "verified user");
 
       // show "checking" state, hide the rest
       formIntro.classList.add("hidden");
