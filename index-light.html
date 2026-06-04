@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Elbrit Life Sciences | Doctors' Sky Journeys 2026</title>
-  <meta name="description" content="A clean, light Vue SPA for Elbrit Life Sciences doctors' tours — Georgia, and Georgia plus IDF Doha." />
+  <meta name="description" content="A clean, light Vue SPA for Elbrit Life Sciences doctors' tours — Georgia, and Georgia plus IDF Qatar." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -192,7 +192,7 @@
           <div v-if="t.featured" class="absolute top-6 right-6 text-[10px] uppercase tracking-widest px-3 py-1 rounded-full bg-gradient-to-r from-sun to-coral text-white font-bold">Flagship</div>
           <div class="text-5xl mb-6">{{ t.emoji }}</div>
           <p class="text-xs uppercase tracking-[.25em]" :class="t.featured ? 'text-coral' : 'text-leaf'">{{ t.tag }}</p>
-          <h3 class="font-display text-3xl md:text-4xl mt-2 mb-1">{{ t.title }}</h3>
+          <h3 class="font-display text-3xl md:text-4xl mt-2 mb-1" v-html="t.titleHtml || t.title"></h3>
           <p class="text-ink/50 text-sm mb-6">{{ t.subtitle }}</p>
           <div class="date-grid">
             <span>{{ t.date }}</span>
@@ -313,16 +313,16 @@
         scrolled:false, menuOpen:false, chosenTrip:null, tallyPlaceholder:true,
         heroStats:[{value:'02',label:'Curated Journeys'},{value:'5★',label:'Hospitality'},{value:'∞',label:'Memories'}],
         trips:[
-          { id:'georgia', emoji:'G', tag:'The Escape', title:'Georgia', subtitle:'Where the Caucasus meets the soul.', date:'OCTOBER 2026', nights:'5 NIGHTS', days:'6 DAYS', duration:'Tour Package', featured:false, image:'./assets/georgia-mountain.jpg',
+          { id:'georgia', emoji:'G', tag:'The Escape', title:'Georgia', subtitle:'Where the Caucasus meets the soul.', date:'OCTOBER 2026', nights:'5 NIGHTS', days:'6 DAYS', duration:'Tour Package', featured:false, image:'./assets/georgia-tbilisi-feature.jpg',
             features:['Tbilisi old town & wine country','Kazbegi mountains & monasteries','Premium stays, all-inclusive hospitality','Curated dining & cultural evenings'] },
-          { id:'georgia-doha', emoji:'IDF', tag:'The Escape + The Edge', title:'Georgia + IDF Doha', subtitle:'Adventure today, knowledge tomorrow.', date:'APRIL 2027', nights:'6 NIGHTS', days:'7 DAYS', duration:'Tour + Conference', featured:true, image:'./assets/doha-skyline.jpg',
+          { id:'georgia-doha', emoji:'IDF', tag:'The Escape + The Edge', title:'Georgia + Qatar (IDF+DOHA)', titleHtml:'Georgia + Qatar<sub class="text-[0.5em] font-semibold text-ink/50">(IDF+DOHA)</sub>', subtitle:'Adventure today, knowledge tomorrow.', date:'APRIL 2027', nights:'6 NIGHTS', days:'7 DAYS', duration:'Tour + Conference', featured:true, image:'./assets/doha-skyline.jpg',
             features:['Everything in the Georgia journey','IDF World Diabetes Congress — Doha','CME & global clinical insight','Network with peers across the world'] },
         ],
         bento:[
           { icon:'✈️', title:'Seamless Travel', desc:'Flights, transfers, visas — handled end to end. You simply arrive.', span:'md:col-span-2' },
           { icon:'🏨', title:'Signature Stays', desc:'Hand-picked premium hotels with views worth waking up for.', span:'' },
           { icon:'🍷', title:'Curated Dining', desc:'From Georgian supras to fine dining in Doha.', span:'' },
-          { icon:'🩺', title:'Knowledge, Elevated', desc:'IDF Doha brings world-class diabetes science to your journey.', span:'md:col-span-2' },
+          { icon:'🩺', title:'Knowledge, Elevated', desc:'IDF Qatar brings world-class diabetes science to your journey.', span:'md:col-span-2' },
           { icon:'🤝', title:'A Community', desc:'Travel beside peers who become lasting friends.', span:'md:col-span-2' },
           { icon:'🎁', title:'Little Surprises', desc:'Thoughtful touches at every turn — the Elbrit way.', span:'' },
         ],
